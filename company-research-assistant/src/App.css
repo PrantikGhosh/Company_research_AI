@@ -531,10 +531,92 @@ body {
 .history-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-color);
+  gap: 1rem;
+}
+
+.history-card.collapsed .history-card-header {
+  margin-bottom: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: none;
+}
+
+.history-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.history-company-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.history-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.history-chevron {
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.history-card-header:hover .history-chevron {
+  color: var(--primary-color);
+}
+
+.history-card.collapsed {
+  padding: 1rem 1.25rem;
+}
+
+.history-card.expanded {
+  animation: fadeIn 0.25s ease-in;
+}
+
+.history-card.expanded .history-card-content {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Company initials */
+.history-initial {
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-right: 0.65rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.5px;
+}
+.snapshot-summary {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin: 0.75rem 0;
+}
+
+.snapshot-empty {
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .history-initial { font-size: 1.1rem; margin-right: 0.5rem; }
 }
 
 .history-card-header h3 {

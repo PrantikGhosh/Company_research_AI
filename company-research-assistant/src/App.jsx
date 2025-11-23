@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, MessageSquare, Mic, Server, AlertCircle, History, Sun, Moon } from 'lucide-react';
+import { FileText, MessageSquare, Mic, Server, AlertCircle, History, Sun, Moon, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import ChatInterface from './components/ChatInterface';
 import VoiceControl from './components/VoiceControl';
 import ResearchPanel from './components/ResearchPanel';
@@ -30,6 +30,7 @@ function App() {
   
   // Version history state
   const [researchHistory, setResearchHistory] = useState([]);
+  const [expandedHistory, setExpandedHistory] = useState({});
   
   // Server status
   const [serverStatus, setServerStatus] = useState('checking');
@@ -256,6 +257,103 @@ function App() {
     setActiveTab('research');
   };
 
+  // Sanitize markdown artifacts for history preview snippets
+  const sanitizePreview = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/```[\s\S]*?```/g, ' ')        // fenced code blocks
+      .replace(/`[^`]*`/g, ' ')                // inline code
+      .replace(/\*\*(.*?)\*\*/g, '$1')      // bold **text**
+      .replace(/\*(.*?)\*/g, '$1')           // italic *text*
+      .replace(/__(.*?)__/g, '$1')             // bold __text__
+      .replace(/_(.*?)_/g, '$1')               // italic _text_
+      .replace(/^#{1,6}\s*/gm, '')            // headings
+      .replace(/\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g, '$1') // markdown links
+      .replace(/^>\s?/gm, '')                 // blockquotes
+      .replace(/\*{1,}/g, '')                 // stray asterisks
+      .replace(/\r?\n+/g, ' ')               // newlines to space
+      .replace(/\s{2,}/g, ' ')                // collapse multiple spaces
+      .trim();
+  };
+
+  const toggleHistoryExpand = (id) => {
+    setExpandedHistory(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // Quick summary preview: 2-3 sentence overview
+  const buildQuickSnapshot = (raw, companyName = '') => {
+    if (!raw) return <p className="snapshot-empty">No data available.</p>;
+    
+    const cleaned = raw
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`[^`]*`/g, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/__(.*?)__/g, '$1')
+      .replace(/_(.*?)_/g, '$1')
+      .replace(/^#{1,6}\s*/gm, '')
+      .replace(/\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
+      .replace(/^>\s?/gm, '')
+      // Remove common report headings
+      .replace(/\d+\.\s*Company Overview\s*/gi, '')
+      .replace(/Company Research Report\s*/gi, '')
+      .replace(/Company Overview\s*/gi, '')
+      .replace(/\r?\n+/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    // Remove duplicate company name at the start if present
+    if (companyName) {
+      const namePattern = new RegExp(`^${companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+`, 'i');
+      const cleanedText = cleaned.replace(namePattern, '');
+      
+      // Split into sentences
+      const sentences = cleanedText
+        .split(/(?<=[.!?])\s+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      // Pick first 2-3 sentences (max ~300 chars total)
+      let preview = '';
+      let count = 0;
+      for (const sent of sentences) {
+        if (count >= 3) break;
+        if (preview.length + sent.length > 300) break;
+        preview += (preview ? ' ' : '') + sent;
+        count++;
+      }
+
+      if (!preview) return <p className="snapshot-empty">No preview available.</p>;
+      
+      return <p className="snapshot-summary">{preview}</p>;
+    }
+
+    // Fallback if no company name provided
+    const sentences = cleaned
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    let preview = '';
+    let count = 0;
+    for (const sent of sentences) {
+      if (count >= 3) break;
+      if (preview.length + sent.length > 300) break;
+      preview += (preview ? ' ' : '') + sent;
+      count++;
+    }
+
+    if (!preview) return <p className="snapshot-empty">No preview available.</p>;
+    
+    return <p className="snapshot-summary">{preview}</p>;
+  };
+
+  // Generate single initial from company name
+  const companyInitials = (name) => {
+    if (!name) return '?';
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -350,12 +448,21 @@ function App() {
         {activeTab === 'plan' && (
           <div className="tab-content full-width">
             {accountPlan ? (
-              <AccountPlan
-                plan={accountPlan}
-                onUpdateSection={handleUpdateSection}
-                isUpdating={isUpdatingSection}
-                companyName={currentCompany}
-              />
+              <div className="plan-fade">
+                <AccountPlan
+                  plan={accountPlan}
+                  onUpdateSection={handleUpdateSection}
+                  isUpdating={isUpdatingSection}
+                  companyName={currentCompany}
+                />
+              </div>
+            ) : isGeneratingPlan ? (
+              <div className="plan-loading-state">
+                <Loader2 size={56} className="spinning" />
+                <h2>Generating Account Plan</h2>
+                <p>{currentCompany ? `Working on a comprehensive plan for ${currentCompany}...` : 'Assembling structured sections...'}</p>
+                <p className="loading-hint">This can take a moment while the AI synthesizes research into 10 sections.</p>
+              </div>
             ) : (
               <div className="empty-state">
                 <FileText size={64} />
@@ -383,54 +490,67 @@ function App() {
               </div>
             ) : (
               <div className="history-list">
-                {researchHistory.map((entry) => (
-                  <div key={entry.id} className="history-card">
-                    <div className="history-card-header">
-                      <div>
-                        <h3>{entry.company}</h3>
-                        <span className="history-timestamp">
-                          {new Date(entry.timestamp).toLocaleString()}
+                {researchHistory.map((entry) => {
+                  const expanded = expandedHistory[entry.id];
+                  return (
+                    <div key={entry.id} className={`history-card ${expanded ? 'expanded' : 'collapsed'}`}>
+                      <div className="history-card-header" onClick={() => toggleHistoryExpand(entry.id)}>
+                        <div className="history-title-block">
+                          <div className="history-company-row">
+                            <span className="history-initial" aria-hidden="true">{companyInitials(entry.company)}</span>
+                            <h3>{entry.company}</h3>
+                          </div>
+                          <div className="history-meta-row">
+                            <span className="history-timestamp">
+                              {new Date(entry.timestamp).toLocaleString()}
+                            </span>
+                            <div className="history-status">
+                              <span className="status-badge">
+                                <FileText size={14} />
+                                Research
+                              </span>
+                              {entry.hasAccountPlan && (
+                                <span className="status-badge success">
+                                  <FileText size={14} />
+                                  Account Plan
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="history-chevron">
+                          {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                         </span>
                       </div>
-                      <div className="history-status">
-                        {entry.hasAccountPlan && (
-                          <span className="status-badge success">
-                            <FileText size={14} />
-                            Account Plan
-                          </span>
-                        )}
-                        <span className="status-badge">
-                          <FileText size={14} />
-                          Research
-                        </span>
-                      </div>
-                    </div>
-                    <div className="history-card-content">
-                      <p className="history-preview">
-                        {entry.researchData.substring(0, 200)}...
-                      </p>
-                    </div>
-                    <div className="history-card-actions">
-                      <button 
-                        className="btn-secondary"
-                        onClick={() => loadFromHistory(entry)}
-                      >
-                        Load Research
-                      </button>
-                      {entry.hasAccountPlan && (
-                        <button 
-                          className="btn-primary"
-                          onClick={() => {
-                            loadFromHistory(entry);
-                            setActiveTab('plan');
-                          }}
-                        >
-                          View Account Plan
-                        </button>
+                      {expanded && (
+                        <>
+                          <div className="history-card-content">
+                            {buildQuickSnapshot(entry.researchData, entry.company)}
+                          </div>
+                          <div className="history-card-actions">
+                            <button 
+                              className="btn-secondary"
+                              onClick={() => loadFromHistory(entry)}
+                            >
+                              Load Research
+                            </button>
+                            {entry.hasAccountPlan && (
+                              <button 
+                                className="btn-primary"
+                                onClick={() => {
+                                  loadFromHistory(entry);
+                                  setActiveTab('plan');
+                                }}
+                              >
+                                View Account Plan
+                              </button>
+                            )}
+                          </div>
+                        </>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

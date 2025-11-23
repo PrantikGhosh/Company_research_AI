@@ -28,6 +28,44 @@
   color: var(--text-secondary);
 }
 
+/* Loading state while generating plan */
+.plan-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  min-height: 60vh;
+}
+
+.plan-loading-state h2 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.plan-loading-state .loading-hint {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  max-width: 420px;
+}
+@keyframes fadeInPlan {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.plan-fade {
+  animation: fadeInPlan 0.4s ease-in;
+}
+
+.plan-loading-state {
+  animation: fadeInPlan 0.3s ease-in;
+}
+
 .account-plan-header {
   display: flex;
   justify-content: space-between;
