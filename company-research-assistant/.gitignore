@@ -1,0 +1,75 @@
+############################################################
+# Git Ignore - Company Research Assistant (Node + Vite + LangChain)
+# Only keep .env.example and essential source artifacts.
+############################################################
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules/
+
+# Build / Output / Caches
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.turbo/
+.parcel-cache/
+.vite/
+coverage/
+
+# Environment Files (keep example only)
+.env
+.env.*
+!.env.example
+
+# IDE / Editor settings
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Package manager backups
+package-lock.json.*
+yarn.lock.*
+pnpm-lock.yaml.*
+
+# Misc / System
+*.pid
+*.seed
+*.tgz
+*.local
+*.log.*
+
+# Generated artifacts
+*.pdf
+
+# Temporary scratch markdown (avoid committing notes)
+scratch*.md
+temp*.md
+
+# Legacy Gemini scripts (ensure ignored if recreated)
+server/test-gemini.js
+server/list-models.js
+
+# Exceptions: keep README and license if added
+!README.md
+!LICENSE
+
+############################################################

@@ -1,0 +1,111 @@
+.voice-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.voice-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.voice-button:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.voice-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.voice-button.listening {
+  background: var(--danger-color);
+  color: white;
+  border-color: var(--danger-color);
+  animation: pulse 1.5s infinite;
+}
+
+.voice-button.enabled {
+  background: var(--success-color);
+  color: white;
+  border-color: var(--success-color);
+}
+
+.voice-button.disabled {
+  background: var(--secondary-color);
+  color: white;
+  border-color: var(--secondary-color);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.transcript-preview {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.transcript-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.transcript-text {
+  flex: 1;
+  color: var(--text-primary);
+  font-style: italic;
+}
+
+.voice-unsupported {
+  padding: 0.75rem 1rem;
+  background: #fee2e2;
+  color: var(--danger-color);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .voice-control {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem 1rem;
+  }
+
+  .voice-button span {
+    display: none;
+  }
+
+  .transcript-preview {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
